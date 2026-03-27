@@ -1,6 +1,3 @@
 {
-  "version": 2,
-  "rewrites": [
-    { "source": "/api/replicate", "destination": "/api/replicate.js" }
-  ]
+  "version": 2
 }
