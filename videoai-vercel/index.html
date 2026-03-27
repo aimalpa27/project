@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+  <meta name="description" content="Генератор видео на искусственном интеллекте. Опишите сцену текстом — ИИ создаст видео за 30–60 секунд. Бесплатный пробный просмотр.">
+  <meta name="keywords" content="генератор видео ИИ, создать видео онлайн, нейросеть видео, AI video generator, текст в видео">
+  <meta name="robots" content="index, follow">
+  <meta property="og:title" content="VideoAI — Генератор видео на ИИ">
+  <meta property="og:description" content="Создайте видео из текста за 30–60 секунд с помощью искусственного интеллекта">
+  <meta property="og:type" content="website">
+  <link rel="canonical" href="https://ваш-сайт.ru/video">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ИИ Генератор Видео</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0a0a0f;--surface:#12121a;--surface2:#1a1a26;
+  --border:#2a2a3d;--accent:#7c3aed;--accent2:#a855f7;
+  --gold:#f59e0b;--text:#f0eeff;--muted:#8b85a8;
+  --green:#10b981;--red:#ef4444;
+}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;inset:0;background-image:linear-gradient(rgba(124,58,237,0.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,58,237,0.03) 1px,transparent 1px);background-size:40px 40px;z-index:0;pointer-events:none}
+.orb{position:fixed;width:600px;height:600px;border-radius:50%;background:radial-gradient(circle,rgba(124,58,237,0.12) 0%,transparent 70%);top:-200px;left:50%;transform:translateX(-50%);z-index:0;pointer-events:none;animation:orbPulse 4s ease-in-out infinite}
+@keyframes orbPulse{0%,100%{opacity:.6;transform:translateX(-50%) scale(1)}50%{opacity:1;transform:translateX(-50%) scale(1.1)}}
+.wrap{position:relative;z-index:1;max-width:680px;margin:0 auto;padding:40px 20px 80px}
+@keyframes fadeUp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+/* ── SCREENS ── */
+.screen{display:none;animation:fadeUp .7s ease both}
+.screen.active{display:block}
+
+/* ── SHARED ── */
+.card{background:var(--surface);border:1px solid var(--border);border-radius:20px;padding:28px;margin-bottom:14px}
+.btn-primary{width:100%;padding:16px;background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;font-family:'Syne',sans-serif;font-size:.95rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;border:none;border-radius:12px;cursor:pointer;transition:opacity .2s,transform .15s;position:relative;overflow:hidden}
+.btn-primary::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,transparent 40%,rgba(255,255,255,.1));pointer-events:none}
+.btn-primary:hover:not(:disabled){opacity:.9;transform:translateY(-1px)}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-outline{width:100%;padding:14px;background:transparent;color:var(--accent2);font-family:'Syne',sans-serif;font-size:.88rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border:1px solid var(--accent);border-radius:12px;cursor:pointer;transition:background .2s}
+.btn-outline:hover{background:rgba(124,58,237,.1)}
+.input-field{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:13px 16px;color:var(--text);font-family:'DM Sans',sans-serif;font-size:.95rem;transition:border-color .2s;margin-bottom:10px}
+.input-field:focus{outline:none;border-color:var(--accent)}
+.input-field::placeholder{color:var(--muted)}
+.field-label{font-size:.7rem;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.err-msg{color:var(--red);font-size:.8rem;margin-bottom:10px;display:none}
+.logo{text-align:center;margin-bottom:32px}
+.logo h1{font-family:'Syne',sans-serif;font-size:clamp(1.7rem,5vw,2.6rem);font-weight:800;background:linear-gradient(135deg,#fff 30%,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.logo p{color:var(--muted);font-size:.88rem;margin-top:6px}
+.tabs{display:flex;background:var(--surface2);border-radius:12px;padding:4px;margin-bottom:20px;gap:4px}
+.tab{flex:1;padding:10px;text-align:center;border-radius:9px;cursor:pointer;font-size:.85rem;font-weight:500;color:var(--muted);transition:all .2s}
+.tab.active{background:var(--surface);color:var(--text);box-shadow:0 1px 4px rgba(0,0,0,.3)}
+
+/* ── GENERATOR ── */
+.topbar{display:flex;align-items:center;justify-content:space-between;background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:12px 18px;margin-bottom:16px}
+.user-info{display:flex;align-items:center;gap:10px}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--accent),var(--accent2));display:flex;align-items:center;justify-content:center;font-family:'Syne',sans-serif;font-weight:700;font-size:.85rem}
+.user-name{font-size:.88rem;font-weight:500}
+.user-status{font-size:.7rem;color:var(--muted)}
+.plan-badge{font-size:.68rem;padding:3px 9px;border-radius:20px;font-weight:600;letter-spacing:.05em}
+.plan-free{background:rgba(139,133,168,.12);color:var(--muted);border:1px solid rgba(139,133,168,.2)}
+.plan-paid{background:rgba(245,158,11,.12);color:var(--gold);border:1px solid rgba(245,158,11,.25)}
+.logout-btn{font-size:.72rem;color:var(--muted);background:none;border:1px solid var(--border);border-radius:8px;padding:5px 10px;cursor:pointer;transition:all .2s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
+textarea.input-field{resize:none;height:100px;line-height:1.6}
+.tips{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tip{font-size:.72rem;background:rgba(124,58,237,.08);border:1px solid rgba(124,58,237,.2);color:var(--accent2);border-radius:20px;padding:4px 10px;cursor:pointer;transition:background .2s}
+.tip:hover{background:rgba(124,58,237,.18)}
+.settings-row{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+.field{display:flex;flex-direction:column;gap:6px}
+select.input-field{margin-bottom:0;cursor:pointer}
+
+/* Status */
+.status-box{display:none;text-align:center;padding:28px;background:var(--surface);border:1px solid var(--border);border-radius:16px;margin-top:12px}
+.status-box.show{display:block}
+.spinner{width:40px;height:40px;border:3px solid rgba(124,58,237,.2);border-top-color:var(--accent2);border-radius:50%;animation:spin .8s linear infinite;margin:0 auto 14px}
+.status-title{font-family:'Syne',sans-serif;font-size:1.05rem;font-weight:700;margin-bottom:6px}
+.status-sub{font-size:.8rem;color:var(--muted)}
+.prog{width:100%;height:4px;background:var(--surface2);border-radius:2px;margin-top:14px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;width:0%;transition:width .4s ease}
+
+/* Result */
+.result-box{display:none;margin-top:12px;background:var(--surface);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+.result-box.show{display:block}
+.video-wrap{position:relative}
+video{width:100%;display:block;background:#000;max-height:380px}
+/* Watermark overlay for free users */
+.wm-overlay{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;padding-bottom:20px;pointer-events:none}
+.wm-overlay.hide{display:none}
+.wm-blur{position:absolute;bottom:0;left:0;right:0;height:50%;background:linear-gradient(to bottom,transparent,rgba(10,10,15,.92));pointer-events:all;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:16px}
+.wm-text{font-family:'Syne',sans-serif;font-size:.85rem;font-weight:700;color:#fff;text-align:center}
+.wm-sub{font-size:.72rem;color:rgba(255,255,255,.6);text-align:center}
+.result-footer{padding:16px}
+.dl-btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:13px;background:rgba(16,185,129,.1);border:1px solid rgba(16,185,129,.3);color:var(--green);font-family:'Syne',sans-serif;font-size:.85rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;border-radius:10px;text-decoration:none;transition:background .2s;cursor:pointer}
+.dl-btn:hover{background:rgba(16,185,129,.2)}
+.dl-btn.locked{background:rgba(139,133,168,.08);border-color:rgba(139,133,168,.2);color:var(--muted);cursor:not-allowed}
+
+/* Paywall screen */
+.paywall{display:none;margin-top:12px;background:var(--surface);border:1px solid rgba(245,158,11,.3);border-radius:16px;padding:24px;text-align:center}
+.paywall.show{display:block}
+.paywall-icon{font-size:2.5rem;margin-bottom:12px}
+.paywall h3{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:800;margin-bottom:8px}
+.paywall p{font-size:.85rem;color:var(--muted);margin-bottom:20px;line-height:1.6}
+.plans-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:16px}
+.plan-card{background:var(--surface2);border:1px solid var(--border);border-radius:12px;padding:14px 8px;cursor:pointer;transition:border-color .2s,background .2s;text-align:center}
+.plan-card:hover,.plan-card.sel{border-color:var(--accent);background:rgba(124,58,237,.08)}
+.plan-card.hot{border-color:rgba(245,158,11,.35)}
+.plan-card.hot.sel{border-color:var(--gold)}
+.plan-tag{font-size:.58rem;background:var(--gold);color:#000;font-weight:700;border-radius:8px;padding:2px 6px;margin-bottom:6px;display:inline-block}
+.plan-vids{font-family:'Syne',sans-serif;font-size:1.4rem;font-weight:800;color:var(--accent2)}
+.plan-card.hot .plan-vids{color:var(--gold)}
+.plan-label{font-size:.7rem;color:var(--muted);margin-top:2px}
+.plan-price{font-size:.82rem;font-weight:600;color:var(--text);margin-top:4px}
+.promo-row{display:flex;gap:8px;margin-bottom:12px}
+.promo-row .input-field{flex:1;margin-bottom:0}
+.promo-apply{padding:0 18px;background:rgba(124,58,237,.15);color:var(--accent2);border:1px solid var(--accent);border-radius:10px;font-size:.82rem;font-weight:600;cursor:pointer;transition:background .2s;white-space:nowrap}
+.promo-apply:hover{background:rgba(124,58,237,.25)}
+.promo-ok{color:var(--green);font-size:.78rem;display:none;margin-bottom:8px}
+.promo-fail{color:var(--red);font-size:.78rem;display:none;margin-bottom:8px}
+
+/* Error */
+.err-box{display:none;background:rgba(239,68,68,.08);border:1px solid rgba(239,68,68,.25);border-radius:12px;padding:14px;color:var(--red);font-size:.83rem;line-height:1.6;margin-top:12px}
+.err-box.show{display:block}
+</style>
+</head>
+<body>
+<div class="orb"></div>
+<div class="wrap">
+
+<!-- ═══════════════ ЭКРАН 1: АВТОРИЗАЦИЯ ═══════════════ -->
+<div class="screen active" id="screenAuth">
+  <div class="logo">
+    <h1>🎬 VideoAI</h1>
+    <p>Генератор видео на искусственном интеллекте</p>
+  </div>
+  <div class="card">
+    <div class="tabs">
+      <div class="tab active" id="tabReg" onclick="switchTab('reg')">Регистрация</div>
+      <div class="tab" id="tabLogin" onclick="switchTab('login')">Войти</div>
+    </div>
+
+    <!-- Регистрация -->
+    <div id="formReg">
+      <div class="field-label">Имя</div>
+      <input class="input-field" id="regName" type="text" placeholder="Ваше имя">
+      <div class="field-label">Email</div>
+      <input class="input-field" id="regEmail" type="email" placeholder="email@example.com">
+      <div class="field-label">Пароль</div>
+      <input class="input-field" id="regPass" type="password" placeholder="Минимум 6 символов">
+      <div class="err-msg" id="regErr"></div>
+      <button class="btn-primary" onclick="doRegister()">Зарегистрироваться</button>
+    </div>
+
+    <!-- Вход -->
+    <div id="formLogin" style="display:none">
+      <div class="field-label">Email</div>
+      <input class="input-field" id="loginEmail" type="email" placeholder="email@example.com">
+      <div class="field-label">Пароль</div>
+      <input class="input-field" id="loginPass" type="password" placeholder="Ваш пароль">
+      <div class="err-msg" id="loginErr"></div>
+      <button class="btn-primary" onclick="doLogin()">Войти</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════ ЭКРАН 2: ГЕНЕРАТОР ═══════════════ -->
+<div class="screen" id="screenApp">
+
+  <!-- Топбар -->
+  <div class="topbar">
+    <div class="user-info">
+      <div class="avatar" id="userAvatar">?</div>
+      <div>
+        <div class="user-name" id="userName">—</div>
+        <div class="user-status" id="userStatus">—</div>
+      </div>
+    </div>
+    <span class="plan-badge plan-free" id="planBadge">Бесплатно</span>
+    <button class="logout-btn" onclick="doLogout()">Выйти</button>
+  </div>
+
+  <!-- Форма -->
+  <div class="card">
+    <div class="field-label">✦ Опишите видео (на английском лучше)</div>
+    <textarea class="input-field" id="prompt" placeholder="A beautiful sunset over mountains, cinematic, 4K quality, slow motion..."></textarea>
+    <div class="tips">
+      <span class="tip" onclick="setTip(this)">Sunset over ocean, cinematic</span>
+      <span class="tip" onclick="setTip(this)">Flying through clouds, aerial</span>
+      <span class="tip" onclick="setTip(this)">City timelapse at night, 4K</span>
+      <span class="tip" onclick="setTip(this)">Forest with fireflies, magical</span>
+    </div>
+    <div class="settings-row">
+      <div class="field">
+        <div class="field-label">Длительность</div>
+        <select class="input-field" id="dur"><option value="5">5 секунд</option><option value="10">10 секунд</option></select>
+      </div>
+      <div class="field">
+        <div class="field-label">Качество</div>
+        <select class="input-field" id="qual"><option value="480p">480p (быстро)</option><option value="720p" selected>720p</option></select>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn-primary" id="genBtn" onclick="generate()">⚡ Генерировать видео</button>
+
+  <!-- Статус -->
+  <div class="status-box" id="statusBox">
+    <div class="spinner"></div>
+    <div class="status-title" id="sTitle">Запускаем...</div>
+    <div class="status-sub" id="sSub">Подождите</div>
+    <div class="prog"><div class="prog-fill" id="progFill"></div></div>
+  </div>
+
+  <!-- Ошибка -->
+  <div class="err-box" id="errBox"></div>
+
+  <!-- Результат -->
+  <div class="result-box" id="resultBox">
+    <div class="video-wrap">
+      <video id="videoEl" controls autoplay loop muted></video>
+      <div class="wm-overlay" id="wmOverlay">
+        <div class="wm-blur">
+          <div class="wm-text">🔒 Скачивание доступно после оплаты</div>
+          <div class="wm-sub">Видео готово — разблокируйте для скачивания</div>
+        </div>
+      </div>
+    </div>
+    <div class="result-footer">
+      <a class="dl-btn locked" id="dlBtn">🔒 Разблокировать скачивание</a>
+    </div>
+  </div>
+
+  <!-- Пейволл -->
+  <div class="paywall" id="paywall">
+    <div class="paywall-icon">🎬</div>
+    <h3>Ваше видео готово!</h3>
+    <p>Выберите тариф для скачивания видео,<br>или введите промокод на 1 видео</p>
+
+    <div class="plans-grid">
+      <div class="plan-card" onclick="selectPlan(this,'start')">
+        <div class="plan-vids">5</div>
+        <div class="plan-label">видео</div>
+        <div class="plan-price">500 ₸</div>
+      </div>
+      <div class="plan-card hot" onclick="selectPlan(this,'base')">
+        <div class="plan-tag">🔥 ХИТ</div>
+        <div class="plan-vids">20</div>
+        <div class="plan-label">видео</div>
+        <div class="plan-price">1 500 ₸</div>
+      </div>
+      <div class="plan-card" onclick="selectPlan(this,'pro')">
+        <div class="plan-vids">50</div>
+        <div class="plan-label">видео</div>
+        <div class="plan-price">3 000 ₸</div>
+      </div>
+    </div>
+
+    <button class="btn-primary" id="buyBtn" style="margin-bottom:12px;display:none" onclick="showPaymentInfo()">💳 Оплатить и скачать</button>
+
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:10px">— или введите промокод —</div>
+    <div class="promo-row">
+      <input class="input-field" id="promoInput" type="text" placeholder="Промокод на 1 видео" maxlength="20" style="text-transform:uppercase">
+      <button class="promo-apply" onclick="applyPromo()">Применить</button>
+    </div>
+    <div class="promo-ok" id="promoOk">✅ Промокод принят! Скачивание разблокировано.</div>
+    <div class="promo-fail" id="promoFail">❌ Неверный или использованный промокод</div>
+  </div>
+
+  <!-- Инфо об оплате -->
+  <div class="card" id="payInfo" style="display:none;border-color:rgba(245,158,11,.3)">
+    <div style="font-size:.72rem;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:12px">💳 Оплата</div>
+    <p style="font-size:.88rem;line-height:1.7;color:var(--muted)">
+      Переведите на <strong style="color:var(--text)" id="payAmount"></strong> по реквизитам:<br><br>
+      <strong style="color:var(--text)">Kaspi: +7 702 287 3154</strong><br>
+      <span style="font-size:.78rem">Получатель: Асем Сералиева</span><br><br>
+      После оплаты напишите в WhatsApp — вам пришлют промокод:<br>
+      <a href="https://wa.me/77022873154" target="_blank" style="color:var(--accent2)">+7 702 287 3154</a>
+    </p>
+  </div>
+
+</div>
+
+</div><!-- /wrap -->
+
+<script>
+// API key is now securely stored on the server
+
+// ═══ ПРОМОКОДЫ ═══
+// Однократные (на 1 видео) — после использования блокируются
+const ONE_TIME_PROMOS = {
+  'FREE001': true, 'FREE002': true, 'FREE003': true,
+  'FREE004': true, 'FREE005': true, 'FREE006': true,
+  'FREE007': true, 'FREE008': true, 'FREE009': true,
+  'FREE010': true,
+  'GIFT001': true, 'GIFT002': true, 'GIFT003': true,
+};
+
+// Многоразовые (при наличии тарифа)
+const PLAN_PROMOS = {
+  'START2024': { credits: 5,  plan: 'Старт'   },
+  'BASE2024':  { credits: 20, plan: 'Базовый'  },
+  'PRO2024':   { credits: 50, plan: 'Про'      },
+  'ADMIN':     { credits: 999,plan: 'Админ'    },
+};
+
+// ═══ DB (localStorage) ═══
+function getDB()    { return JSON.parse(localStorage.getItem('vaiDB') || '{"users":{},"usedPromos":{}}'); }
+function saveDB(db) { localStorage.setItem('vaiDB', JSON.stringify(db)); }
+function getSession(){ return JSON.parse(localStorage.getItem('vaiUser') || 'null'); }
+function setSession(u){ localStorage.setItem('vaiUser', JSON.stringify(u)); }
+
+// ═══ AUTH ═══
+function switchTab(t) {
+  document.getElementById('tabReg').classList.toggle('active', t==='reg');
+  document.getElementById('tabLogin').classList.toggle('active', t==='login');
+  document.getElementById('formReg').style.display   = t==='reg'   ? 'block' : 'none';
+  document.getElementById('formLogin').style.display = t==='login' ? 'block' : 'none';
+}
+
+function doRegister() {
+  const name  = document.getElementById('regName').value.trim();
+  const email = document.getElementById('regEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('regPass').value;
+  const err   = document.getElementById('regErr');
+  err.style.display = 'none';
+
+  if (!name)          { showErr(err, 'Введите имя'); return; }
+  if (!email.includes('@')) { showErr(err, 'Неверный email'); return; }
+  if (pass.length < 6){ showErr(err, 'Пароль минимум 6 символов'); return; }
+
+  const db = getDB();
+  if (db.users[email]) { showErr(err, 'Email уже зарегистрирован'); return; }
+
+  db.users[email] = { name, pass, credits: 0, plan: 'free', trialUsed: false };
+  saveDB(db);
+  setSession({ email, name });
+  openApp();
+}
+
+function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const pass  = document.getElementById('loginPass').value;
+  const err   = document.getElementById('loginErr');
+  err.style.display = 'none';
+
+  const db = getDB();
+  const u  = db.users[email];
+  if (!u || u.pass !== pass) { showErr(err, 'Неверный email или пароль'); return; }
+
+  setSession({ email, name: u.name });
+  openApp();
+}
+
+function doLogout() {
+  localStorage.removeItem('vaiUser');
+  location.reload();
+}
+
+function showErr(el, msg) { el.textContent = msg; el.style.display = 'block'; }
+
+// ═══ APP ═══
+function openApp() {
+  document.getElementById('screenAuth').classList.remove('active');
+  document.getElementById('screenApp').classList.add('active');
+  const s  = getSession();
+  const db = getDB();
+  const u  = db.users[s.email];
+  document.getElementById('userAvatar').textContent = s.name[0].toUpperCase();
+  document.getElementById('userName').textContent   = s.name;
+
+  if (u.plan !== 'free') {
+    document.getElementById('userStatus').textContent  = 'Осталось: ' + u.credits + ' видео';
+    document.getElementById('planBadge').textContent   = u.plan;
+    document.getElementById('planBadge').className     = 'plan-badge plan-paid';
+  } else if (u.trialUsed) {
+    document.getElementById('userStatus').textContent  = 'Пробный просмотр использован';
+    document.getElementById('planBadge').textContent   = 'Бесплатно';
+  } else {
+    document.getElementById('userStatus').textContent  = '1 бесплатный просмотр';
+    document.getElementById('planBadge').textContent   = 'Бесплатно';
+  }
+}
+
+function setTip(el) { document.getElementById('prompt').value = el.textContent; }
+
+// Progress
+let progTimer = null;
+function startProg() {
+  let p = 5;
+  document.getElementById('progFill').style.width = '5%';
+  progTimer = setInterval(() => {
+    p = Math.min(p + (p < 50 ? 2 : .5), 90);
+    document.getElementById('progFill').style.width = p + '%';
+  }, 1500);
+}
+function stopProg(ok) {
+  clearInterval(progTimer);
+  document.getElementById('progFill').style.width = ok ? '100%' : '0%';
+}
+
+function showBox(id)  { document.getElementById(id).classList.add('show'); }
+function hideBox(id)  { document.getElementById(id).classList.remove('show'); }
+
+// ═══ GENERATE ═══
+async function generate() {
+  const s  = getSession();
+  const db = getDB();
+  const u  = db.users[s.email];
+  const prompt = document.getElementById('prompt').value.trim();
+  if (!prompt) { alert('Введите описание видео!'); return; }
+
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  hideBox('resultBox'); hideBox('errBox');
+  document.getElementById('paywall').style.display = 'none';
+  document.getElementById('payInfo').style.display = 'none';
+
+  showBox('statusBox');
+  document.getElementById('sTitle').textContent = 'Запускаем генерацию...';
+  document.getElementById('sSub').textContent   = 'Отправляем запрос к ИИ';
+  startProg();
+
+  try {
+    const apiUrl = 'https://api.replicate.com/v1/models/minimax/video-01/predictions';
+
+    // Use our Vercel API proxy - no CORS issues!
+    const res = await fetch(window.location.origin + '/api/replicate?action=create', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt })
+    });
+    if (!res.ok) throw new Error('API ошибка: ' + res.status + '. Попробуйте снова через минуту.');
+
+    const pred = await res.json();
+    document.getElementById('sTitle').textContent = 'Видео генерируется...';
+    document.getElementById('sSub').textContent   = 'ID: ' + pred.id.slice(0,8) + '... · ~30–90 сек';
+
+    let videoUrl = null;
+    for (let i = 0; i < 120; i++) {
+      await sleep(3000);
+      const pRes = await fetch(window.location.origin + '/api/replicate?action=status&id=' + pred.id);
+      const data = await pRes.json();
+      if (data.status === 'succeeded') {
+        videoUrl = Array.isArray(data.output) ? data.output[0] : data.output;
+        break;
+      }
+      if (data.status === 'failed' || data.status === 'canceled')
+        throw new Error('Генерация не удалась: ' + (data.error || data.status));
+      const d = '.'.repeat((i%3)+1);
+      document.getElementById('sTitle').textContent = 'Генерируется' + d;
+      document.getElementById('sSub').textContent   = '~' + ((i+1)*3) + ' сек · ' + data.status;
+    }
+    if (!videoUrl) throw new Error('Превышено время ожидания');
+
+    stopProg(true);
+    hideBox('statusBox');
+
+    // Show video
+    document.getElementById('videoEl').src = videoUrl;
+    document.getElementById('videoEl').dataset.url = videoUrl;
+    showBox('resultBox');
+
+    // Paid user — unlock immediately
+    if (u.plan !== 'free' && u.credits > 0) {
+      u.credits--;
+      db.users[s.email] = u;
+      saveDB(db);
+      unlockDownload(videoUrl);
+      document.getElementById('userStatus').textContent = 'Осталось: ' + u.credits + ' видео';
+    } else {
+      // Free — show preview + paywall
+      document.getElementById('wmOverlay').classList.remove('hide');
+      document.getElementById('dlBtn').className = 'dl-btn locked';
+      document.getElementById('dlBtn').onclick    = () => document.getElementById('paywall').scrollIntoView({behavior:'smooth'});
+      document.getElementById('dlBtn').textContent = '🔒 Разблокировать скачивание';
+
+      // Mark trial used
+      if (!u.trialUsed) {
+        u.trialUsed = true;
+        db.users[s.email] = u;
+        saveDB(db);
+        document.getElementById('userStatus').textContent = 'Пробный просмотр использован';
+      }
+      document.getElementById('paywall').style.display = 'block';
+    }
+
+  } catch(e) {
+    stopProg(false);
+    hideBox('statusBox');
+    const b = document.getElementById('errBox');
+    b.innerHTML = '⚠️ <strong>Ошибка:</strong> ' + e.message;
+    showBox('errBox');
+  }
+  btn.disabled = false;
+}
+
+function unlockDownload(url) {
+  document.getElementById('wmOverlay').classList.add('hide');
+  const dl = document.getElementById('dlBtn');
+  dl.className   = 'dl-btn';
+  dl.textContent = '↓ Скачать видео';
+  dl.onclick = () => {
+    const a = document.createElement('a');
+    a.href = url; a.download = 'ai-video.mp4'; a.target = '_blank';
+    a.click();
+  };
+}
+
+// ═══ PLANS ═══
+let selectedPlan = null;
+const planPrices = { start: '500 ₸', base: '1 500 ₸', pro: '3 000 ₸' };
+
+function selectPlan(el, plan) {
+  document.querySelectorAll('.plan-card').forEach(c => c.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedPlan = plan;
+  document.getElementById('buyBtn').style.display = 'block';
+}
+
+function showPaymentInfo() {
+  if (!selectedPlan) return;
+  document.getElementById('payAmount').textContent = planPrices[selectedPlan];
+  document.getElementById('payInfo').style.display = 'block';
+  document.getElementById('payInfo').scrollIntoView({behavior:'smooth'});
+}
+
+// ═══ PROMO ═══
+function applyPromo() {
+  const code = document.getElementById('promoInput').value.trim().toUpperCase();
+  const ok   = document.getElementById('promoOk');
+  const fail = document.getElementById('promoFail');
+  ok.style.display = fail.style.display = 'none';
+
+  const db   = getDB();
+  const s    = getSession();
+  const u    = db.users[s.email];
+  const used = db.usedPromos;
+
+  // Check one-time promo
+  if (ONE_TIME_PROMOS[code]) {
+    if (used[code]) { fail.style.display = 'block'; return; }
+    used[code] = true;
+    db.usedPromos = used;
+    saveDB(db);
+    ok.style.display = 'block';
+    const url = document.getElementById('videoEl').dataset.url;
+    if (url) unlockDownload(url);
+    document.getElementById('paywall').style.display = 'none';
+    return;
+  }
+
+  // Check plan promo
+  if (PLAN_PROMOS[code]) {
+    if (used[code] && code !== 'ADMIN') { fail.style.display = 'block'; return; }
+    const promo = PLAN_PROMOS[code];
+    used[code]  = true;
+    u.credits   = (u.credits || 0) + promo.credits;
+    u.plan      = promo.plan;
+    db.usedPromos = used;
+    db.users[s.email] = u;
+    saveDB(db);
+    ok.textContent = '✅ Промокод «' + promo.plan + '» активирован! ' + promo.credits + ' видео добавлено.';
+    ok.style.display = 'block';
+    document.getElementById('planBadge').textContent = promo.plan;
+    document.getElementById('planBadge').className   = 'plan-badge plan-paid';
+    document.getElementById('userStatus').textContent = 'Осталось: ' + u.credits + ' видео';
+    const url = document.getElementById('videoEl').dataset.url;
+    if (url) { u.credits--; saveDB(getDB()); unlockDownload(url); }
+    setTimeout(() => document.getElementById('paywall').style.display = 'none', 1500);
+    return;
+  }
+
+  fail.style.display = 'block';
+}
+
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+// Auto-open if session exists
+if (getSession()) openApp();
+</script>
+</body>
+</html>
