@@ -308,8 +308,8 @@ const PLAN_PROMOS = {
 // ═══ DB (localStorage) ═══
 function getDB()    { return JSON.parse(localStorage.getItem('vaiDB') || '{"users":{},"usedPromos":{}}'); }
 function saveDB(db) { localStorage.setItem('vaiDB', JSON.stringify(db)); }
-function getSession(){ return JSON.parse(sessionStorage.getItem('vaiUser') || 'null'); }
-function setSession(u){ sessionStorage.setItem('vaiUser', JSON.stringify(u)); }
+function getSession(){ return JSON.parse(localStorage.getItem('vaiUser') || 'null'); }
+function setSession(u){ localStorage.setItem('vaiUser', JSON.stringify(u)); }
 
 // ═══ AUTH ═══
 function switchTab(t) {
@@ -354,7 +354,7 @@ function doLogin() {
 }
 
 function doLogout() {
-  sessionStorage.removeItem('vaiUser');
+  localStorage.removeItem('vaiUser');
   location.reload();
 }
 
@@ -426,7 +426,7 @@ async function generate() {
     const apiUrl = 'https://api.replicate.com/v1/models/minimax/video-01/predictions';
 
     // Use our Vercel API proxy - no CORS issues!
-    const res = await fetch('/api/replicate?action=create', {
+    const res = await fetch(window.location.origin + '/api/replicate?action=create', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ prompt })
@@ -440,7 +440,7 @@ async function generate() {
     let videoUrl = null;
     for (let i = 0; i < 120; i++) {
       await sleep(3000);
-      const pRes = await fetch('/api/replicate?action=status&id=' + pred.id);
+      const pRes = await fetch(window.location.origin + '/api/replicate?action=status&id=' + pred.id);
       const data = await pRes.json();
       if (data.status === 'succeeded') {
         videoUrl = Array.isArray(data.output) ? data.output[0] : data.output;
