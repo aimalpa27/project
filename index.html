@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Сервис генерации видео и изображений с авторизацией, оплатой и промокодами.">
-  <title>FrameForge</title>
+  <meta name="description" content="Генератор видео и фото на искусственном интеллекте. Создайте видео за 30-90 секунд.">
+  <title>VideoAI — Генератор видео и фото</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
@@ -103,21 +103,46 @@
     .promo-item span { color:var(--muted); font-size:13px; line-height:1.6; }
     @media (max-width:980px) { .auth-shell, .hero, .app-grid { grid-template-columns:1fr; } }
     @media (max-width:760px) { .page { width:min(100%, calc(100% - 18px)); padding-top:12px; } .intro, .auth-card, .topbar, .hero-card, .side-card, .controls, .result { padding:18px; } .feature-grid, .stats, .mode-switch, .row, .pack-grid { grid-template-columns:1fr; } }
-  </style>
+  
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.7;transform:scale(1.15)} }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    .feature { display:flex; flex-direction:column; gap:4px; padding:16px; }
+</style>
 </head>
 <body>
   <main class="page">
     <section class="screen active" id="authScreen">
       <div class="auth-shell">
-        <article class="panel intro">
+        <article class="panel intro" style="background:linear-gradient(135deg,rgba(125,211,252,.07),rgba(167,139,250,.09));">
           <div>
-            <div class="eyebrow">FrameForge</div>
-            <h1>Видео и фото, за которые можно брать оплату</h1>
-            <p>Генерация по тексту, анимация фотографии, вход по почте, восстановление пароля и платное скачивание в одном кабинете.</p>
+            <div class="eyebrow" style="background:rgba(125,211,252,.12);border-color:rgba(125,211,252,.25);">
+              <span style="display:inline-block;animation:pulse 2s ease infinite;">✦</span> VideoAI
+            </div>
+            <h1 style="background:linear-gradient(135deg,#f4f7fb,#7dd3fc,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Создавай видео и фото с помощью ИИ</h1>
+            <p style="font-size:18px;margin:16px 0 24px;">Опишите сцену — ИИ создаст видео за 30–90 секунд. Анимируйте фото, генерируйте изображения.</p>
             <div class="feature-grid">
-              <div class="feature"><strong>3</strong><span>режима генерации</span></div>
-              <div class="feature"><strong>Email</strong><span>вход, регистрация и восстановление пароля</span></div>
-              <div class="feature"><strong>Card</strong><span>оплата скачивания и пакетов кредитов</span></div>
+              <div class="feature" style="background:rgba(125,211,252,.06);border-color:rgba(125,211,252,.15);">
+                <strong style="font-size:28px;">🎬</strong>
+                <span style="font-weight:700;color:#7dd3fc;">Видео по тексту</span>
+                <span style="color:var(--muted);font-size:13px;">Опишите сцену — получите видео</span>
+              </div>
+              <div class="feature" style="background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.15);">
+                <strong style="font-size:28px;">🖼️</strong>
+                <span style="font-weight:700;color:#a78bfa;">Фото по тексту</span>
+                <span style="color:var(--muted);font-size:13px;">Любое изображение за секунды</span>
+              </div>
+              <div class="feature" style="background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.15);">
+                <strong style="font-size:28px;">✨</strong>
+                <span style="font-weight:700;color:#86efac;">Анимация фото</span>
+                <span style="color:var(--muted);font-size:13px;">Загрузите фото — оно оживёт</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:24px;padding:18px;border-radius:18px;background:rgba(125,211,252,.05);border:1px solid rgba(125,211,252,.1);">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:#86efac;font-size:20px;">⚡</span><span style="color:var(--muted);font-size:14px;">Результат за <strong style="color:var(--text);">30–90 сек</strong></span></div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:#fbbf24;font-size:20px;">🔒</span><span style="color:var(--muted);font-size:14px;">Скачивание за <strong style="color:var(--text);">1 кредит</strong></span></div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:#f472b6;font-size:20px;">🎁</span><span style="color:var(--muted);font-size:14px;">Промокоды от <strong style="color:var(--text);">500 ₸</strong></span></div>
             </div>
           </div>
         </article>
@@ -168,7 +193,7 @@
           <div class="avatar" id="avatar">?</div>
           <div>
             <div class="user-name" id="userName">Пользователь</div>
-            <div class="user-email" id="userEmail">name@example.com</div>
+            <div class="user-email" id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2648474b4366435e474b564a430845494b">[email&#160;protected]</a></div>
           </div>
         </div>
         <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
@@ -177,23 +202,27 @@
         </div>
       </div>
 
-      <section class="hero">
-        <article class="panel hero-card">
+      <section class="hero" style="grid-template-columns:1fr;">
+        <article class="panel hero-card" style="background:linear-gradient(135deg,rgba(125,211,252,.05),rgba(167,139,250,.07));">
           <div class="eyebrow">AI Studio</div>
-          <h2>Видео, фото и анимация в одном кабинете</h2>
-          <p class="side-note">Результат показывается сразу, а скачивание открывается после оплаты или применения промокода.</p>
+          <h2 style="background:linear-gradient(135deg,#f4f7fb,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Видео, фото и анимация в одном месте</h2>
+          <p class="side-note" style="font-size:16px;margin:12px 0 20px;">Результат готов сразу — скачивание открывается после оплаты или промокода.</p>
           <div class="stats">
-            <div class="stat"><strong>3 режима</strong><span>видео по тексту, фото по тексту, анимация фото</span></div>
-            <div class="stat"><strong>3-12 сек</strong><span>реальная передача длительности в модель</span></div>
-            <div class="stat"><strong>Кредиты</strong><span>1 скачивание списывает 1 кредит</span></div>
+            <div class="stat" style="background:rgba(125,211,252,.06);border-color:rgba(125,211,252,.15);text-align:center;">
+              <strong style="font-size:32px;background:linear-gradient(135deg,#7dd3fc,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">3</strong>
+              <span>режима генерации</span>
+            </div>
+            <div class="stat" style="background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.15);text-align:center;">
+              <strong style="font-size:32px;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">30s</strong>
+              <span>среднее время генерации</span>
+            </div>
+            <div class="stat" style="background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.15);text-align:center;">
+              <strong style="font-size:32px;background:linear-gradient(135deg,#86efac,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">HD</strong>
+              <span>качество до 720p</span>
+            </div>
           </div>
         </article>
-        <div class="side-stack">
-          <article class="panel side-card"><h3>Почта и пароль</h3><p class="side-note">Вход и восстановление пароля работают через Supabase Auth, поэтому ссылка на сброс приходит письмом.</p></article>
-          <article class="panel side-card"><h3>Оплата</h3><p class="side-note">Оплата картой идёт через Stripe Checkout. После успешного платежа кредиты зачисляются в аккаунт.</p></article>
-          <article class="panel side-card"><h3>Промокоды</h3><p class="side-note">Администратор создаёт коды в панели, а пользователь активирует их в своём кабинете.</p></article>
-        </div>
-      </section>
+        </section>
 
       <section class="app-grid">
         <article class="panel controls">
@@ -230,10 +259,10 @@
 
         <article class="panel result">
           <h3 class="section-title">Результат</h3>
-          <div class="wallet"><strong>Баланс: <span id="creditsValue">0</span> кредитов</strong><span>Одно скачивание списывает 1 кредит.</span></div>
+          <div class="wallet" style="display:flex;align-items:center;justify-content:space-between;gap:12px;"><div><strong style="font-size:22px;">💳 <span id="creditsValue">0</span> кредитов</strong><span style="display:block;margin-top:4px;">Одно скачивание списывает 1 кредит</span></div></div>
           <div class="message" id="appMsg"></div>
           <div class="status" id="statusBox"><strong id="statusTitle">Запускаем генерацию</strong><div id="statusText">Отправляем запрос в модель.</div><div class="progress"><div id="progressBar"></div></div></div>
-          <div class="result-empty" id="emptyState">После генерации здесь появится превью. Если кредитов нет, пользователь увидит оплату и поле для промокода.</div>
+          <div class="result-empty" id="emptyState">✨ Введите промпт и нажмите «Сгенерировать». Результат появится здесь.</div>
           <div class="output" id="outputBox">
             <div class="frame" id="mediaFrame"></div>
             <div class="result-note" id="resultNote"></div>
@@ -242,9 +271,9 @@
           <div class="paywall" id="paywall">
             <div><h3>Открыть скачивание</h3><p class="side-note" style="margin:0;">Пользователь оплачивает пакет кредитов картой. После успешной оплаты кредиты сразу зачисляются в аккаунт.</p></div>
             <div class="pack-grid">
-              <button class="pack active" data-pack="starter" type="button"><small>Старт</small><strong>5</strong><span>кредитов</span></button>
-              <button class="pack" data-pack="plus" type="button"><small>Основной</small><strong>20</strong><span>кредитов</span></button>
-              <button class="pack" data-pack="pro" type="button"><small>Профи</small><strong>50</strong><span>кредитов</span></button>
+              <button class="pack active" data-pack="starter" type="button"><small>Старт</small><strong>5</strong><span>кредитов</span><span style="color:var(--accent);font-size:13px;margin-top:4px;display:block;">500 ₸</span></button>
+              <button class="pack" data-pack="plus" type="button"><small>Основной</small><strong>20</strong><span>кредитов</span><span style="color:var(--accent);font-size:13px;margin-top:4px;display:block;">1 500 ₸</span></button>
+              <button class="pack" data-pack="pro" type="button"><small>Профи</small><strong>50</strong><span>кредитов</span><span style="color:var(--accent);font-size:13px;margin-top:4px;display:block;">3 000 ₸</span></button>
             </div>
             <button class="button" id="payBtn" type="button">Оплатить картой</button>
             <div>
@@ -256,7 +285,7 @@
             </div>
           </div>
           <div class="admin-box" id="adminBox">
-            <div><h3>Промокоды</h3><p class="side-note" style="margin:0;">Этот блок видит только админ.</p></div>
+            <div><h3>🔑 Создать промокод</h3><p class="side-note" style="margin:0;">Только администратор видит эту панель. Созданные коды пользователи вводят в поле промокода.</p></div>
             <div class="row">
               <div class="field"><label for="promoCode">Код</label><input id="promoCode" type="text" placeholder="Например SPRING25"></div>
               <div class="field"><label for="promoCredits">Кредиты</label><input id="promoCredits" type="text" value="5"></div>
@@ -272,7 +301,7 @@
       </section>
     </section>
   </main>
-  <script>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
     const state = { config:null, supabase:null, session:null, profile:null, mode:"video", imageDataUrl:"", progressTimer:null, selectedPack:"starter", currentResultUrl:"", currentResultMode:"", initError:"" };
     const authScreen = document.getElementById("authScreen");
     const appScreen = document.getElementById("appScreen");
@@ -732,8 +761,4 @@
       });
     }
     function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
-    function generatePromoCode() { const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let value = "PROMO-"; for (let index = 0; index < 8; index += 1) value += alphabet[Math.floor(Math.random() * alphabet.length)]; return value; }
-    function escapeHtml(value) { return String(value).replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#39;"); }
-  </script>
-</body>
-</html>
+    function generatePromoCode() { const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let value = "PROMO-"; for (let index = 0; index < 8; index += 1) value += alphabet[Math.floor(Math.random() * alphabet.length)]
