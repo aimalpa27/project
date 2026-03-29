@@ -1,0 +1,765 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Генератор видео и фото на искусственном интеллекте. Создайте видео за 30-90 секунд.">
+  <title>VideoAI — Генератор видео и фото</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; }
+    :root { --bg:#07111d; --panel:rgba(13,24,39,.88); --line:rgba(148,163,184,.16); --line-strong:rgba(125,211,252,.35); --text:#f4f7fb; --muted:#98a6bb; --accent:#7dd3fc; --accent-2:#a78bfa; --radius:24px; --shadow:0 32px 90px rgba(2,6,23,.38); }
+    body { margin:0; min-height:100vh; font-family:"Manrope",sans-serif; color:var(--text); background:radial-gradient(circle at top left, rgba(125,211,252,.18), transparent 30%), radial-gradient(circle at top right, rgba(167,139,250,.16), transparent 26%), linear-gradient(180deg,#07111d 0%,#0a1320 100%); }
+    body::before { content:""; position:fixed; inset:0; background-image:linear-gradient(rgba(255,255,255,.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.03) 1px, transparent 1px); background-size:42px 42px; pointer-events:none; mask-image:linear-gradient(180deg, rgba(0,0,0,1), transparent 90%); }
+    .page { width:min(1220px, calc(100% - 28px)); margin:0 auto; padding:24px 0 56px; }
+    .hidden { display:none !important; }
+    .screen { display:none; animation:fadeIn .25s ease; }
+    .screen.active { display:block; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+    .panel { background:var(--panel); border:1px solid var(--line); border-radius:var(--radius); box-shadow:var(--shadow); backdrop-filter:blur(16px); }
+    .auth-shell, .hero, .app-grid { display:grid; gap:18px; }
+    .auth-shell { min-height:calc(100vh - 80px); grid-template-columns:1.08fr .92fr; align-items:stretch; }
+    .hero { grid-template-columns:1.08fr .92fr; margin-bottom:18px; }
+    .app-grid { grid-template-columns:minmax(0,.95fr) minmax(0,1.05fr); align-items:start; }
+    .intro, .auth-card, .hero-card, .side-card, .controls, .result { padding:24px; }
+    .intro { display:flex; flex-direction:column; justify-content:space-between; }
+    .eyebrow, .status-tag { display:inline-flex; align-items:center; gap:10px; width:fit-content; padding:8px 13px; border-radius:999px; font-size:12px; letter-spacing:.12em; text-transform:uppercase; }
+    .eyebrow { background:rgba(125,211,252,.08); border:1px solid rgba(125,211,252,.16); color:var(--accent); }
+    .status-tag { background:rgba(52,211,153,.08); border:1px solid rgba(52,211,153,.18); color:#86efac; }
+    h1, h2, h3 { margin:0; font-family:"Space Grotesk",sans-serif; }
+    .intro h1 { margin-top:18px; font-size:clamp(40px,8vw,84px); line-height:.94; letter-spacing:-.06em; max-width:8ch; }
+    .hero-card h2 { font-size:clamp(32px,7vw,66px); line-height:.96; letter-spacing:-.06em; max-width:8.5ch; margin-top:14px; }
+    .intro p, .side-note, .result-note, .wallet span { color:var(--muted); line-height:1.7; }
+    .intro p { margin:18px 0 0; font-size:18px; max-width:56ch; }
+    .feature-grid, .stats, .mode-switch, .row, .pack-grid { display:grid; gap:12px; }
+    .feature-grid, .stats, .pack-grid { grid-template-columns:repeat(3,1fr); }
+    .feature, .stat, .message, .status, .wallet, .paywall, .admin-box { border-radius:22px; border:1px solid var(--line); background:rgba(15,23,42,.64); }
+    .feature, .stat, .topbar, .wallet, .status, .paywall, .admin-box { padding:18px; }
+    .feature strong, .stat strong { display:block; font-size:24px; margin-bottom:4px; }
+    .tabs { display:flex; gap:8px; padding:6px; border-radius:18px; background:rgba(15,23,42,.65); border:1px solid var(--line); margin-bottom:22px; }
+    .tab, .mode-btn, .pack, .chip, .button, .button-ghost { transition:.2s ease; cursor:pointer; }
+    .tab { flex:1; border:none; border-radius:14px; padding:13px 16px; color:var(--muted); background:transparent; font:inherit; font-weight:700; }
+    .tab.active, .mode-btn.active, .pack.active { background:linear-gradient(135deg, rgba(125,211,252,.15), rgba(167,139,250,.12)); border-color:var(--line-strong); }
+    .form { display:none; }
+    .form.active { display:block; }
+    .form-title, .section-title { margin-bottom:10px; font-size:28px; }
+    .form-subtitle { margin:0 0 20px; color:var(--muted); line-height:1.7; font-size:15px; }
+    .field { margin-bottom:14px; }
+    label, .field-label { color:var(--muted); font-size:13px; letter-spacing:.08em; text-transform:uppercase; }
+    label { display:block; margin-bottom:8px; }
+    .field-label { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:8px; }
+    .field-label small { text-transform:none; letter-spacing:normal; font-size:11px; }
+    input, textarea, select, button { font:inherit; }
+    input[type="text"], input[type="email"], input[type="password"], textarea, select { width:100%; border:1px solid var(--line); border-radius:18px; background:rgba(15,23,42,.76); color:var(--text); padding:15px 16px; outline:none; transition:.2s ease; }
+    textarea { min-height:128px; resize:vertical; line-height:1.65; }
+    input:focus, textarea:focus, select:focus { border-color:var(--line-strong); transform:translateY(-1px); }
+    .button, .button-ghost { border:none; border-radius:18px; padding:15px 18px; font-weight:800; }
+    .button { color:#07111d; background:linear-gradient(135deg, var(--accent), var(--accent-2)); width:100%; }
+    .button-ghost { width:100%; color:var(--text); background:rgba(15,23,42,.72); border:1px solid var(--line); }
+    .button:hover, .button-ghost:hover, .mode-btn:hover, .pack:hover, .chip:hover { transform:translateY(-1px); opacity:.96; }
+    .button:disabled, .button-ghost:disabled { opacity:.55; cursor:not-allowed; transform:none; }
+    .topbar { display:flex; align-items:center; justify-content:space-between; gap:16px; margin-bottom:18px; }
+    .user-block { display:flex; align-items:center; gap:14px; }
+    .avatar { width:46px; height:46px; border-radius:16px; display:grid; place-items:center; font-family:"Space Grotesk",sans-serif; font-weight:700; background:linear-gradient(135deg, rgba(125,211,252,.2), rgba(167,139,250,.2)); border:1px solid rgba(125,211,252,.15); }
+    .user-name { font-weight:800; font-size:18px; }
+    .user-email { color:var(--muted); font-size:13px; margin-top:3px; }
+    .side-stack, .output, .promo-list { display:grid; gap:14px; }
+    .mode-switch { grid-template-columns:repeat(3,1fr); margin-bottom:18px; }
+    .mode-btn { padding:14px; min-height:88px; border-radius:18px; text-align:left; background:rgba(15,23,42,.68); border:1px solid var(--line); color:var(--muted); }
+    .mode-btn strong { display:block; color:var(--text); font-size:14px; margin-bottom:6px; }
+    .mode-btn span { display:block; font-size:12px; line-height:1.5; }
+    .chips { display:flex; flex-wrap:wrap; gap:8px; margin-top:12px; }
+    .chip { padding:8px 11px; border-radius:999px; border:1px solid rgba(125,211,252,.16); background:rgba(125,211,252,.07); color:#dbeafe; }
+    .upload { padding:16px; border-radius:20px; background:rgba(15,23,42,.62); border:1px dashed rgba(125,211,252,.26); }
+    .upload-meta { margin-top:10px; color:var(--muted); font-size:14px; }
+    .preview { display:none; margin-top:12px; overflow:hidden; border-radius:18px; border:1px solid var(--line); }
+    .preview img { display:block; width:100%; max-height:250px; object-fit:cover; }
+    .message { padding:14px 16px; display:none; margin-top:14px; line-height:1.6; font-size:14px; }
+    .message.show { display:block; }
+    .message.error { color:#fecdd3; background:rgba(127,29,29,.2); border-color:rgba(244,114,182,.2); }
+    .message.ok { color:#bbf7d0; background:rgba(6,78,59,.25); border-color:rgba(52,211,153,.2); }
+    .status { display:none; margin-bottom:14px; }
+    .status.show { display:block; }
+    .status strong { display:block; font-size:18px; margin-bottom:6px; }
+    .progress { height:8px; margin-top:12px; border-radius:999px; overflow:hidden; background:rgba(148,163,184,.11); }
+    .progress > div { height:100%; width:10%; border-radius:inherit; background:linear-gradient(90deg, var(--accent), var(--accent-2)); transition:width .35s ease; }
+    .result-empty { padding:18px; border-radius:20px; border:1px solid var(--line); background:rgba(15,23,42,.54); color:var(--muted); line-height:1.7; }
+    .output { display:none; }
+    .output.show { display:grid; }
+    .frame { overflow:hidden; border-radius:22px; border:1px solid var(--line); background:#050912; min-height:320px; display:grid; place-items:center; }
+    .frame img, .frame video { display:block; width:100%; height:100%; object-fit:contain; background:#050912; }
+    .download-block { display:grid; gap:10px; }
+    .paywall, .admin-box { display:none; gap:14px; margin-top:14px; }
+    .paywall.show, .admin-box.show { display:grid; }
+    .pack { padding:16px; border-radius:18px; border:1px solid var(--line); background:rgba(15,23,42,.68); }
+    .pack small { display:block; color:var(--muted); margin-bottom:10px; }
+    .pack strong { display:block; font-size:30px; margin-bottom:4px; }
+    .promo-row { display:grid; grid-template-columns:1fr auto; gap:10px; }
+    .promo-item { padding:14px; border-radius:18px; border:1px solid var(--line); background:rgba(15,23,42,.55); }
+    .promo-item strong { display:block; margin-bottom:5px; font-size:15px; letter-spacing:.05em; }
+    .promo-item span { color:var(--muted); font-size:13px; line-height:1.6; }
+    .feature { display:flex; flex-direction:column; gap:4px; }
+    @media (max-width:980px) { .auth-shell, .hero, .app-grid { grid-template-columns:1fr; } }
+    @media (max-width:760px) { .page { width:min(100%, calc(100% - 18px)); padding-top:12px; } .intro, .auth-card, .topbar, .hero-card, .side-card, .controls, .result { padding:18px; } .feature-grid, .stats, .mode-switch, .row, .pack-grid { grid-template-columns:1fr; } }
+  
+    @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.7;transform:scale(1.15)} }
+    @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-6px)} }
+    .feature { display:flex; flex-direction:column; gap:4px; padding:16px; }
+</style>
+</head>
+<body>
+  <main class="page">
+    <section class="screen active" id="authScreen">
+      <div class="auth-shell" style="align-items:start;">
+        <article class="panel intro" style="background:linear-gradient(135deg,rgba(125,211,252,.07),rgba(167,139,250,.09));">
+          <div>
+            <div class="eyebrow" style="background:rgba(125,211,252,.12);border-color:rgba(125,211,252,.25);">
+              <span style="display:inline-block;animation:pulse 2s ease infinite;">✦</span> VideoAI
+            </div>
+            <h1 style="background:linear-gradient(135deg,#f4f7fb,#7dd3fc,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Создавай видео и фото с помощью ИИ</h1>
+            <p style="font-size:18px;margin:16px 0 24px;">Опишите сцену — ИИ создаст видео за 30–90 секунд. Анимируйте фото, генерируйте изображения.</p>
+            <div class="feature-grid">
+              <div class="feature" style="background:rgba(125,211,252,.06);border-color:rgba(125,211,252,.15);">
+                <strong style="font-size:28px;">🎬</strong>
+                <span style="font-weight:700;color:#7dd3fc;">Видео по тексту</span>
+                <span style="color:var(--muted);font-size:13px;">Опишите сцену — получите видео</span>
+              </div>
+              <div class="feature" style="background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.15);">
+                <strong style="font-size:28px;">🖼️</strong>
+                <span style="font-weight:700;color:#a78bfa;">Фото по тексту</span>
+                <span style="color:var(--muted);font-size:13px;">Любое изображение за секунды</span>
+              </div>
+              <div class="feature" style="background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.15);">
+                <strong style="font-size:28px;">✨</strong>
+                <span style="font-weight:700;color:#86efac;">Анимация фото</span>
+                <span style="color:var(--muted);font-size:13px;">Загрузите фото — оно оживёт</span>
+              </div>
+            </div>
+          </div>
+          <div style="margin-top:24px;padding:18px;border-radius:18px;background:rgba(125,211,252,.05);border:1px solid rgba(125,211,252,.1);">
+            <div style="display:flex;gap:20px;flex-wrap:wrap;">
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:#86efac;font-size:20px;">⚡</span><span style="color:var(--muted);font-size:14px;">Результат за <strong style="color:var(--text);">30–90 сек</strong></span></div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:#fbbf24;font-size:20px;">🔒</span><span style="color:var(--muted);font-size:14px;">Скачивание за <strong style="color:var(--text);">1 кредит</strong></span></div>
+              <div style="display:flex;align-items:center;gap:8px;"><span style="color:#f472b6;font-size:20px;">🎁</span><span style="color:var(--muted);font-size:14px;">Промокоды от <strong style="color:var(--text);">500 ₸</strong></span></div>
+            </div>
+          </div>
+        </article>
+        <article class="panel auth-card" style="position:relative;z-index:10;">
+          <div class="tabs">
+            <button class="tab active" data-auth-tab="login">Войти</button>
+            <button class="tab" data-auth-tab="register">Регистрация</button>
+            <button class="tab" data-auth-tab="forgot">Пароль</button>
+          </div>
+          <div class="form active" id="loginForm">
+            <h2 class="form-title">Вход</h2>
+            <p class="form-subtitle">Введите почту и пароль.</p>
+            <div class="field"><label for="loginEmail">Почта</label><input id="loginEmail" type="email" placeholder="name@example.com"></div>
+            <div class="field"><label for="loginPassword">Пароль</label><input id="loginPassword" type="password" placeholder="Ваш пароль"></div>
+            <button class="button" id="loginBtn" type="button">Войти</button>
+            <div class="message" id="loginMsg"></div>
+          </div>
+          <div class="form" id="registerForm">
+            <h2 class="form-title">Регистрация</h2>
+            <p class="form-subtitle">Имя, почта и пароль. После регистрации профиль создаётся автоматически.</p>
+            <div class="field"><label for="registerName">Имя</label><input id="registerName" type="text" placeholder="Ваше имя"></div>
+            <div class="field"><label for="registerEmail">Почта</label><input id="registerEmail" type="email" placeholder="name@example.com"></div>
+            <div class="field"><label for="registerPassword">Пароль</label><input id="registerPassword" type="password" placeholder="Минимум 6 символов"></div>
+            <button class="button" id="registerBtn" type="button">Создать аккаунт</button>
+            <div class="message" id="registerMsg"></div>
+          </div>
+          <div class="form" id="forgotForm">
+            <h2 class="form-title">Восстановление пароля</h2>
+            <p class="form-subtitle">Введите почту. На неё придёт письмо со ссылкой для смены пароля.</p>
+            <div class="field"><label for="forgotEmail">Почта</label><input id="forgotEmail" type="email" placeholder="name@example.com"></div>
+            <button class="button" id="forgotBtn" type="button">Отправить письмо</button>
+            <div class="message" id="forgotMsg"></div>
+          </div>
+          <div class="form" id="resetForm">
+            <h2 class="form-title">Новый пароль</h2>
+            <p class="form-subtitle">Задайте новый пароль после перехода по ссылке из письма.</p>
+            <div class="field"><label for="resetPassword">Новый пароль</label><input id="resetPassword" type="password" placeholder="Новый пароль"></div>
+            <button class="button" id="resetBtn" type="button">Сохранить новый пароль</button>
+            <div class="message" id="resetMsg"></div>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="screen" id="appScreen">
+      <div class="panel topbar">
+        <div class="user-block">
+          <div class="avatar" id="avatar">?</div>
+          <div>
+            <div class="user-name" id="userName">Пользователь</div>
+            <div class="user-email" id="userEmail"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="2648474b4366435e474b564a430845494b">[email&#160;protected]</a></div>
+          </div>
+        </div>
+        <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+          <div class="status-tag" id="roleTag">Пользователь</div>
+          <button class="button-ghost" id="logoutBtn" type="button" style="width:auto; padding:12px 16px;">Выйти</button>
+        </div>
+      </div>
+
+      <section class="hero" style="grid-template-columns:1fr;">
+        <article class="panel hero-card" style="background:linear-gradient(135deg,rgba(125,211,252,.05),rgba(167,139,250,.07));">
+          <div class="eyebrow">AI Studio</div>
+          <h2 style="background:linear-gradient(135deg,#f4f7fb,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Видео, фото и анимация в одном месте</h2>
+          <p class="side-note" style="font-size:16px;margin:12px 0 20px;">Результат готов сразу — скачивание открывается после оплаты или промокода.</p>
+          <div class="stats">
+            <div class="stat" style="background:rgba(125,211,252,.06);border-color:rgba(125,211,252,.15);text-align:center;">
+              <strong style="font-size:32px;background:linear-gradient(135deg,#7dd3fc,#a78bfa);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">3</strong>
+              <span>режима генерации</span>
+            </div>
+            <div class="stat" style="background:rgba(167,139,250,.06);border-color:rgba(167,139,250,.15);text-align:center;">
+              <strong style="font-size:32px;background:linear-gradient(135deg,#a78bfa,#f472b6);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">30s</strong>
+              <span>среднее время генерации</span>
+            </div>
+            <div class="stat" style="background:rgba(52,211,153,.06);border-color:rgba(52,211,153,.15);text-align:center;">
+              <strong style="font-size:32px;background:linear-gradient(135deg,#86efac,#7dd3fc);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">HD</strong>
+              <span>качество до 720p</span>
+            </div>
+          </div>
+        </article>
+        </section>
+
+      <section class="app-grid">
+        <article class="panel controls">
+          <h3 class="section-title">Генератор</h3>
+          <div class="mode-switch">
+            <button class="mode-btn active" data-mode="video" type="button"><strong>Text → Video</strong><span>Сцена по описанию</span></button>
+            <button class="mode-btn" data-mode="image" type="button"><strong>Text → Image</strong><span>Картинка по тексту</span></button>
+            <button class="mode-btn" data-mode="image-to-video" type="button"><strong>Image → Video</strong><span>Анимация загруженного фото</span></button>
+          </div>
+          <div class="field">
+            <div class="field-label"><span>Промпт</span><small>Лучше писать на английском</small></div>
+            <textarea id="prompt" placeholder="Create a stylish portrait of a smiling woman, soft cinematic light, natural skin, elegant composition"></textarea>
+            <div class="chips">
+              <button class="chip" type="button">A stylish product ad with dramatic light and shallow depth of field</button>
+              <button class="chip" type="button">A smiling woman laughing, natural motion, warm light, clean background</button>
+              <button class="chip" type="button">Animate this portrait with subtle head turn, blinking eyes and soft camera drift</button>
+            </div>
+          </div>
+          <div class="field hidden" id="imageField">
+            <div class="field-label"><span>Исходное фото</span><small>JPG, PNG, WEBP</small></div>
+            <div class="upload">
+              <input id="imageInput" type="file" accept="image/png,image/jpeg,image/webp">
+              <div class="upload-meta" id="imageMeta">Файл пока не выбран.</div>
+              <div class="preview" id="previewWrap"><img id="previewImage" alt="Preview"></div>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field"><label for="duration">Длительность</label><select id="duration"><option value="5">5 секунд</option><option value="8">8 секунд</option><option value="10" selected>10 секунд</option><option value="12">12 секунд</option></select></div>
+            <div class="field"><label for="resolution">Качество</label><select id="resolution"><option value="480p">480p</option><option value="720p" selected>720p</option></select></div>
+            <div class="field"><label for="aspectRatio">Формат</label><select id="aspectRatio"><option value="16:9" selected>16:9</option><option value="9:16">9:16</option><option value="1:1">1:1</option><option value="4:5">4:5</option></select></div>
+          </div>
+          <button class="button" id="generateBtn" type="button">Сгенерировать</button>
+        </article>
+
+        <article class="panel result">
+          <h3 class="section-title">Результат</h3>
+          <div class="wallet" style="display:flex;align-items:center;justify-content:space-between;gap:12px;"><div><strong style="font-size:22px;">💳 <span id="creditsValue">0</span> кредитов</strong><span style="display:block;margin-top:4px;">Одно скачивание списывает 1 кредит</span></div></div>
+          <div class="message" id="appMsg"></div>
+          <div class="status" id="statusBox"><strong id="statusTitle">Запускаем генерацию</strong><div id="statusText">Отправляем запрос в модель.</div><div class="progress"><div id="progressBar"></div></div></div>
+          <div class="result-empty" id="emptyState">✨ Введите промпт и нажмите «Сгенерировать». Результат появится здесь.</div>
+          <div class="output" id="outputBox">
+            <div class="frame" id="mediaFrame"></div>
+            <div class="result-note" id="resultNote"></div>
+            <div class="download-block"><button class="button-ghost" id="downloadBtn" type="button">Скачать</button></div>
+          </div>
+          <div class="paywall" id="paywall">
+            <div><h3>Открыть скачивание</h3><p class="side-note" style="margin:0;">Пользователь оплачивает пакет кредитов картой. После успешной оплаты кредиты сразу зачисляются в аккаунт.</p></div>
+            <div class="pack-grid">
+              <button class="pack active" data-pack="starter" type="button"><small>Старт</small><strong>5</strong><span>кредитов</span><span style="color:var(--accent);font-size:13px;margin-top:4px;display:block;">500 ₸</span></button>
+              <button class="pack" data-pack="plus" type="button"><small>Основной</small><strong>20</strong><span>кредитов</span><span style="color:var(--accent);font-size:13px;margin-top:4px;display:block;">1 500 ₸</span></button>
+              <button class="pack" data-pack="pro" type="button"><small>Профи</small><strong>50</strong><span>кредитов</span><span style="color:var(--accent);font-size:13px;margin-top:4px;display:block;">3 000 ₸</span></button>
+            </div>
+            <button class="button" id="payBtn" type="button">Оплатить картой</button>
+            <div>
+              <label for="promoInput">Промокод</label>
+              <div class="promo-row">
+                <input id="promoInput" type="text" placeholder="Введите код">
+                <button class="button-ghost" id="promoBtn" type="button" style="width:auto;">Активировать</button>
+              </div>
+            </div>
+          </div>
+          <div class="admin-box" id="adminBox">
+            <div><h3>🔑 Создать промокод</h3><p class="side-note" style="margin:0;">Только администратор видит эту панель. Созданные коды пользователи вводят в поле промокода.</p></div>
+            <div class="row">
+              <div class="field"><label for="promoCode">Код</label><input id="promoCode" type="text" placeholder="Например SPRING25"></div>
+              <div class="field"><label for="promoCredits">Кредиты</label><input id="promoCredits" type="text" value="5"></div>
+              <div class="field"><label for="promoMaxUses">Использований</label><input id="promoMaxUses" type="text" value="1"></div>
+            </div>
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <button class="button" id="generatePromoBtn" type="button" style="width:auto;">Создать промокод</button>
+              <button class="button-ghost" id="randomPromoBtn" type="button" style="width:auto;">Сгенерировать код</button>
+            </div>
+            <div class="promo-list" id="promoList"></div>
+          </div>
+        </article>
+      </section>
+    </section>
+  </main>
+  <script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+    const state = { config:null, supabase:null, session:null, profile:null, mode:"video", imageDataUrl:"", progressTimer:null, selectedPack:"starter", currentResultUrl:"", currentResultMode:"", initError:"" };
+    const authScreen = document.getElementById("authScreen");
+    const appScreen = document.getElementById("appScreen");
+    const authTabs = Array.from(document.querySelectorAll("[data-auth-tab]"));
+    const authForms = { login:document.getElementById("loginForm"), register:document.getElementById("registerForm"), forgot:document.getElementById("forgotForm"), reset:document.getElementById("resetForm") };
+    const loginBtn = document.getElementById("loginBtn");
+    const registerBtn = document.getElementById("registerBtn");
+    const forgotBtn = document.getElementById("forgotBtn");
+    const resetBtn = document.getElementById("resetBtn");
+    const logoutBtn = document.getElementById("logoutBtn");
+    const modeButtons = Array.from(document.querySelectorAll(".mode-btn"));
+    const chips = Array.from(document.querySelectorAll(".chip"));
+    const packButtons = Array.from(document.querySelectorAll(".pack"));
+    const avatarEl = document.getElementById("avatar");
+    const userNameEl = document.getElementById("userName");
+    const userEmailEl = document.getElementById("userEmail");
+    const roleTagEl = document.getElementById("roleTag");
+    const creditsValueEl = document.getElementById("creditsValue");
+    const adminBoxEl = document.getElementById("adminBox");
+    const promoListEl = document.getElementById("promoList");
+    const promptEl = document.getElementById("prompt");
+    const durationEl = document.getElementById("duration");
+    const resolutionEl = document.getElementById("resolution");
+    const aspectRatioEl = document.getElementById("aspectRatio");
+    const imageFieldEl = document.getElementById("imageField");
+    const imageInputEl = document.getElementById("imageInput");
+    const imageMetaEl = document.getElementById("imageMeta");
+    const previewWrapEl = document.getElementById("previewWrap");
+    const previewImageEl = document.getElementById("previewImage");
+    const generateBtn = document.getElementById("generateBtn");
+    const downloadBtn = document.getElementById("downloadBtn");
+    const payBtn = document.getElementById("payBtn");
+    const promoBtn = document.getElementById("promoBtn");
+    const promoInputEl = document.getElementById("promoInput");
+    const paywallEl = document.getElementById("paywall");
+    const outputBoxEl = document.getElementById("outputBox");
+    const mediaFrameEl = document.getElementById("mediaFrame");
+    const resultNoteEl = document.getElementById("resultNote");
+    const emptyStateEl = document.getElementById("emptyState");
+    const statusBoxEl = document.getElementById("statusBox");
+    const statusTitleEl = document.getElementById("statusTitle");
+    const statusTextEl = document.getElementById("statusText");
+    const progressBarEl = document.getElementById("progressBar");
+    const appMsgEl = document.getElementById("appMsg");
+    const loginMsgEl = document.getElementById("loginMsg");
+    const registerMsgEl = document.getElementById("registerMsg");
+    const forgotMsgEl = document.getElementById("forgotMsg");
+    const resetMsgEl = document.getElementById("resetMsg");
+    const generatePromoBtn = document.getElementById("generatePromoBtn");
+    const randomPromoBtn = document.getElementById("randomPromoBtn");
+    const promoCodeEl = document.getElementById("promoCode");
+    const promoCreditsEl = document.getElementById("promoCredits");
+    const promoMaxUsesEl = document.getElementById("promoMaxUses");
+
+    authTabs.forEach((tab) => tab.addEventListener("click", () => openAuthForm(tab.dataset.authTab)));
+    modeButtons.forEach((button) => button.addEventListener("click", () => setMode(button.dataset.mode)));
+    chips.forEach((chip) => chip.addEventListener("click", () => { promptEl.value = chip.textContent.trim(); }));
+    packButtons.forEach((button) => button.addEventListener("click", () => {
+      state.selectedPack = button.dataset.pack;
+      packButtons.forEach((item) => item.classList.toggle("active", item === button));
+    }));
+    imageInputEl.addEventListener("change", handleImageSelect);
+    loginBtn.addEventListener("click", signIn);
+    registerBtn.addEventListener("click", signUp);
+    forgotBtn.addEventListener("click", sendResetEmail);
+    resetBtn.addEventListener("click", updatePassword);
+    logoutBtn.addEventListener("click", signOut);
+    generateBtn.addEventListener("click", generateContent);
+    downloadBtn.addEventListener("click", handleDownload);
+    payBtn.addEventListener("click", startCheckout);
+    promoBtn.addEventListener("click", redeemPromo);
+    generatePromoBtn.addEventListener("click", createPromo);
+    randomPromoBtn.addEventListener("click", () => { promoCodeEl.value = generatePromoCode(); });
+    init().catch((error) => {
+      state.initError = error.message || "Ошибка инициализации.";
+      showMessage(registerMsgEl, state.initError, true);
+      showMessage(loginMsgEl, state.initError, true);
+      showMessage(forgotMsgEl, state.initError, true);
+    });
+
+    async function init() {
+      const configResponse = await fetch("/api/config");
+      const config = await configResponse.json();
+      if (!configResponse.ok) throw new Error(config.error || "Не удалось получить конфигурацию.");
+      if (!window.supabase || typeof window.supabase.createClient !== "function") {
+        throw new Error("Не загрузилась библиотека Supabase в браузере.");
+      }
+      state.config = config;
+      state.supabase = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+      const hash = new URLSearchParams(window.location.hash.replace(/^#/, ""));
+      if (hash.get("type") === "recovery") openAuthForm("reset");
+      const { data } = await state.supabase.auth.getSession();
+      state.session = data.session;
+      state.supabase.auth.onAuthStateChange(async (_event, session) => {
+        state.session = session;
+        if (session) {
+          await ensureProfile();
+          await loadProfile();
+          showApp();
+        } else {
+          showAuth();
+        }
+      });
+      if (state.session) {
+        await ensureProfile();
+        await loadProfile();
+        showApp();
+        await maybeHandleStripeReturn();
+      } else {
+        showAuth();
+      }
+    }
+
+    function openAuthForm(name) {
+      authTabs.forEach((tab) => tab.classList.toggle("active", tab.dataset.authTab === name && name !== "reset"));
+      Object.entries(authForms).forEach(([key, form]) => form.classList.toggle("active", key === name));
+    }
+    function showAuth() { authScreen.classList.add("active"); appScreen.classList.remove("active"); }
+    function showApp() { authScreen.classList.remove("active"); appScreen.classList.add("active"); renderProfile(); }
+
+    async function signUp() {
+      clearMessages();
+      if (!state.supabase) return showMessage(registerMsgEl, state.initError || "Авторизация ещё не инициализировалась.", true);
+      const fullName = document.getElementById("registerName").value.trim();
+      const email = document.getElementById("registerEmail").value.trim();
+      const password = document.getElementById("registerPassword").value;
+      if (!fullName || !email || password.length < 6) return showMessage(registerMsgEl, "Заполните имя, почту и пароль не короче 6 символов.", true);
+      setLoading(registerBtn, true);
+      try {
+        const { error } = await state.supabase.auth.signUp({ email, password, options: { emailRedirectTo: window.location.origin, data: { full_name: fullName } } });
+        if (error) throw error;
+        showMessage(registerMsgEl, "Аккаунт создан. Если включено подтверждение email, проверьте почту.", false);
+      } catch (error) {
+        showMessage(registerMsgEl, error.message || "Не удалось зарегистрироваться.", true);
+      } finally {
+        setLoading(registerBtn, false);
+      }
+    }
+
+    async function signIn() {
+      clearMessages();
+      if (!state.supabase) return showMessage(loginMsgEl, state.initError || "Авторизация ещё не инициализировалась.", true);
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      if (!email || !password) return showMessage(loginMsgEl, "Введите почту и пароль.", true);
+      setLoading(loginBtn, true);
+      try {
+        const { error } = await state.supabase.auth.signInWithPassword({ email, password });
+        if (error) throw error;
+        await ensureProfile();
+        await loadProfile();
+        showApp();
+      } catch (error) {
+        showMessage(loginMsgEl, error.message || "Не удалось войти.", true);
+      } finally {
+        setLoading(loginBtn, false);
+      }
+    }
+
+    async function sendResetEmail() {
+      clearMessages();
+      if (!state.supabase) return showMessage(forgotMsgEl, state.initError || "Авторизация ещё не инициализировалась.", true);
+      const email = document.getElementById("forgotEmail").value.trim();
+      if (!email) return showMessage(forgotMsgEl, "Введите почту для восстановления.", true);
+      setLoading(forgotBtn, true);
+      try {
+        const { error } = await state.supabase.auth.resetPasswordForEmail(email, { redirectTo: `${window.location.origin}#type=recovery` });
+        if (error) throw error;
+        showMessage(forgotMsgEl, "Письмо отправлено. Проверьте входящие и спам.", false);
+      } catch (error) {
+        showMessage(forgotMsgEl, error.message || "Не удалось отправить письмо.", true);
+      } finally {
+        setLoading(forgotBtn, false);
+      }
+    }
+
+    async function updatePassword() {
+      clearMessages();
+      if (!state.supabase) return showMessage(resetMsgEl, state.initError || "Авторизация ещё не инициализировалась.", true);
+      const password = document.getElementById("resetPassword").value;
+      if (password.length < 6) return showMessage(resetMsgEl, "Пароль должен быть не короче 6 символов.", true);
+      setLoading(resetBtn, true);
+      try {
+        const { error } = await state.supabase.auth.updateUser({ password });
+        if (error) throw error;
+        showMessage(resetMsgEl, "Новый пароль сохранён. Теперь можно войти с ним.", false);
+        openAuthForm("login");
+      } catch (error) {
+        showMessage(resetMsgEl, error.message || "Не удалось обновить пароль.", true);
+      } finally {
+        setLoading(resetBtn, false);
+      }
+    }
+
+    async function signOut() {
+      await state.supabase.auth.signOut();
+      state.profile = null;
+      resetOutput();
+      showAuth();
+    }
+
+    async function ensureProfile(fullName) {
+      const response = await authedFetch("/api/profile?action=ensure", { method: "POST", body: JSON.stringify({ fullName: fullName || state.session?.user?.user_metadata?.full_name || "" }) });
+      if (!response.ok) {
+        const payload = await response.json().catch(() => ({}));
+        throw new Error(payload.error || "Не удалось создать профиль.");
+      }
+    }
+
+    async function loadProfile() {
+      const response = await authedFetch("/api/profile?action=me");
+      const payload = await response.json();
+      if (!response.ok) throw new Error(payload.error || "Не удалось загрузить профиль.");
+      state.profile = payload.profile;
+      renderProfile();
+      if (state.profile.role === "admin") await loadPromos();
+    }
+
+    function renderProfile() {
+      if (!state.profile || !state.session) return;
+      const fullName = state.profile.full_name || state.session.user.user_metadata?.full_name || "Пользователь";
+      const email = state.profile.email || state.session.user.email || "";
+      avatarEl.textContent = fullName.slice(0, 1).toUpperCase();
+      userNameEl.textContent = fullName;
+      userEmailEl.textContent = email;
+      roleTagEl.textContent = state.profile.role === "admin" ? "Администратор" : "Пользователь";
+      creditsValueEl.textContent = String(Number(state.profile.credits || 0));
+      adminBoxEl.classList.toggle("show", state.profile.role === "admin");
+      updateDownloadState();
+    }
+
+    function setMode(mode) {
+      state.mode = mode;
+      modeButtons.forEach((button) => button.classList.toggle("active", button.dataset.mode === mode));
+      const imageMode = mode === "image";
+      imageFieldEl.classList.toggle("hidden", mode !== "image-to-video");
+      durationEl.disabled = imageMode;
+      resolutionEl.disabled = imageMode;
+      generateBtn.textContent = imageMode ? "Сгенерировать изображение" : mode === "image-to-video" ? "Анимировать фото" : "Сгенерировать видео";
+    }
+
+    async function handleImageSelect(event) {
+      const file = event.target.files && event.target.files[0];
+      if (!file) return resetImage();
+      if (!file.type.startsWith("image/")) {
+        showMessage(appMsgEl, "Нужен JPG, PNG или WEBP.", true);
+        return resetImage();
+      }
+      try {
+        const dataUrl = await fileToDataUrl(file);
+        state.imageDataUrl = await optimizeImage(dataUrl, 1400, 0.86);
+        imageMetaEl.textContent = `${file.name} · ${(file.size / 1024 / 1024).toFixed(2)} MB`;
+        previewImageEl.src = state.imageDataUrl;
+        previewWrapEl.style.display = "block";
+      } catch (error) {
+        showMessage(appMsgEl, error.message || "Не удалось подготовить картинку.", true);
+        resetImage();
+      }
+    }
+
+    function resetImage() {
+      state.imageDataUrl = "";
+      imageMetaEl.textContent = "Файл пока не выбран.";
+      previewWrapEl.style.display = "none";
+      previewImageEl.src = "";
+    }
+
+    async function generateContent() {
+      clearMessages();
+      resetOutput();
+      const prompt = promptEl.value.trim();
+      if (!prompt) return showMessage(appMsgEl, "Введите промпт для генерации.", true);
+      if (state.mode === "image-to-video" && !state.imageDataUrl) return showMessage(appMsgEl, "Для анимации сначала загрузите фото.", true);
+      setLoading(generateBtn, true);
+      emptyStateEl.classList.add("hidden");
+      showStatus("Запускаем генерацию", "Отправляем задачу в модель.");
+      startProgress();
+      try {
+        const response = await fetch("/api/replicate?action=create", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ mode: state.mode, prompt, duration: durationEl.value, resolution: resolutionEl.value, aspectRatio: aspectRatioEl.value, image: state.imageDataUrl })
+        });
+        const createData = await response.json();
+        if (!response.ok) throw new Error(createData.error || "Не удалось создать задачу.");
+        showStatus("Генерация запущена", `Номер задачи: ${createData.id.slice(0, 8)}...`);
+        const finalPrediction = await pollPrediction(createData.id);
+        const outputUrl = normalizeOutput(finalPrediction.output);
+        if (!outputUrl) throw new Error("Сервис не вернул ссылку на результат.");
+        stopProgress(true);
+        hideStatus();
+        renderOutput(outputUrl, state.mode);
+      } catch (error) {
+        stopProgress(false);
+        hideStatus();
+        emptyStateEl.classList.remove("hidden");
+        showMessage(appMsgEl, error.message || "Ошибка генерации.", true);
+      } finally {
+        setLoading(generateBtn, false);
+      }
+    }
+
+    async function pollPrediction(id) {
+      for (let attempt = 1; attempt <= 120; attempt += 1) {
+        await sleep(2500);
+        const response = await fetch(`/api/replicate?action=status&id=${encodeURIComponent(id)}`);
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Не удалось получить статус.");
+        if (payload.status === "succeeded") return payload;
+        if (payload.status === "failed" || payload.status === "canceled") throw new Error(payload.error || `Генерация завершилась со статусом ${payload.status}.`);
+        showStatus("Генерация идёт", `Статус: ${payload.status}. Прошло примерно ${attempt * 2.5} сек.`);
+      }
+      throw new Error("Истекло время ожидания.");
+    }
+
+    function normalizeOutput(output) { return Array.isArray(output) ? output[0] || "" : typeof output === "string" ? output : ""; }
+
+    function renderOutput(url, mode) {
+      state.currentResultUrl = url;
+      state.currentResultMode = mode;
+      mediaFrameEl.innerHTML = mode === "image" ? `<img src="${url}" alt="Generated image">` : `<video src="${url}" controls autoplay loop muted playsinline></video>`;
+      resultNoteEl.textContent = mode === "image" ? "Изображение готово. Скачивание откроется после списания кредита." : "Видео готово. Для более живого результата добавляйте в промпт ракурс, свет и характер движения.";
+      outputBoxEl.classList.add("show");
+      updateDownloadState();
+    }
+
+    function updateDownloadState() {
+      if (!state.currentResultUrl) return;
+      const credits = Number(state.profile?.credits || 0);
+      downloadBtn.textContent = credits > 0 ? "Списать 1 кредит и скачать" : "Скачать после оплаты";
+      paywallEl.classList.toggle("show", credits <= 0);
+    }
+
+    async function handleDownload() {
+      clearMessages();
+      if (!state.currentResultUrl) return showMessage(appMsgEl, "Сначала сгенерируйте результат.", true);
+      if (Number(state.profile?.credits || 0) <= 0) {
+        paywallEl.classList.add("show");
+        return showMessage(appMsgEl, "Для скачивания нужен хотя бы 1 кредит.", true);
+      }
+      const response = await authedFetch("/api/profile?action=consume-credit", { method: "POST", body: JSON.stringify({ amount: 1 }) });
+      const payload = await response.json();
+      if (!response.ok) return showMessage(appMsgEl, payload.error || "Не удалось списать кредит.", true);
+      state.profile = payload.profile;
+      renderProfile();
+      directDownload(state.currentResultUrl, state.currentResultMode === "image" ? "image.jpg" : "video.mp4");
+      showMessage(appMsgEl, "Кредит списан. Скачивание началось.", false);
+    }
+
+    async function startCheckout() {
+      clearMessages();
+      setLoading(payBtn, true);
+      try {
+        const response = await authedFetch("/api/stripe?action=create", { method: "POST", body: JSON.stringify({ pack: state.selectedPack }) });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || "Не удалось создать оплату.");
+        window.location.href = payload.url;
+      } catch (error) {
+        showMessage(appMsgEl, error.message || "Не удалось перейти к оплате.", true);
+      } finally {
+        setLoading(payBtn, false);
+      }
+    }
+
+    async function maybeHandleStripeReturn() {
+      const params = new URLSearchParams(window.location.search);
+      const sessionId = params.get("session_id");
+      const paid = params.get("payment");
+      if (paid !== "success" || !sessionId) {
+        if (paid === "cancelled") showMessage(appMsgEl, "Оплата была отменена.", true);
+        return;
+      }
+      const response = await authedFetch(`/api/stripe?action=verify&session_id=${encodeURIComponent(sessionId)}`);
+      const payload = await response.json();
+      if (response.ok) {
+        state.profile = payload.profile;
+        renderProfile();
+        showMessage(appMsgEl, "Оплата прошла успешно. Кредиты зачислены.", false);
+      } else {
+        showMessage(appMsgEl, payload.error || "Не удалось подтвердить оплату.", true);
+      }
+      window.history.replaceState({}, document.title, window.location.pathname);
+    }
+
+    async function redeemPromo() {
+      clearMessages();
+      const code = promoInputEl.value.trim();
+      if (!code) return showMessage(appMsgEl, "Введите промокод.", true);
+      const response = await authedFetch("/api/promos?action=redeem", { method: "POST", body: JSON.stringify({ code }) });
+      const payload = await response.json();
+      if (!response.ok) return showMessage(appMsgEl, payload.error || "Промокод не применился.", true);
+      state.profile = payload.profile;
+      promoInputEl.value = "";
+      renderProfile();
+      showMessage(appMsgEl, `Промокод активирован. Начислено ${payload.addedCredits} кредитов.`, false);
+    }
+
+    async function createPromo() {
+      clearMessages();
+      const code = promoCodeEl.value.trim().toUpperCase();
+      const credits = Number.parseInt(promoCreditsEl.value, 10);
+      const maxUses = Number.parseInt(promoMaxUsesEl.value, 10);
+      if (!code || !credits || !maxUses) return showMessage(appMsgEl, "Заполните код, кредиты и число использований.", true);
+      const response = await authedFetch("/api/promos?action=create", { method: "POST", body: JSON.stringify({ code, credits, maxUses }) });
+      const payload = await response.json();
+      if (!response.ok) return showMessage(appMsgEl, payload.error || "Не удалось создать промокод.", true);
+      promoCodeEl.value = "";
+      await loadPromos();
+      showMessage(appMsgEl, `Промокод ${payload.promo.code} создан.`, false);
+    }
+
+    async function loadPromos() {
+      if (!state.profile || state.profile.role !== "admin") return;
+      const response = await authedFetch("/api/promos?action=list");
+      const payload = await response.json();
+      if (!response.ok) return showMessage(appMsgEl, payload.error || "Не удалось загрузить промокоды.", true);
+      promoListEl.innerHTML = payload.promos.length
+        ? payload.promos.map((promo) => `<div class="promo-item"><strong>${escapeHtml(promo.code)}</strong><span>${promo.credits} кредитов · использовано ${promo.used_count || 0} из ${promo.max_uses} · ${promo.active ? "активен" : "выключен"}</span></div>`).join("")
+        : '<div class="promo-item"><span>Промокодов пока нет.</span></div>';
+    }
+
+    async function authedFetch(url, init = {}) { const token = state.session?.access_token; return fetch(url, { ...init, headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}`, ...(init.headers || {}) } }); }
+    function setLoading(button, loading) { button.disabled = loading; }
+    function showStatus(title, text) { statusTitleEl.textContent = title; statusTextEl.textContent = text; statusBoxEl.classList.add("show"); }
+    function hideStatus() { statusBoxEl.classList.remove("show"); }
+    function startProgress() {
+      let value = 8;
+      progressBarEl.style.width = "8%";
+      clearInterval(state.progressTimer);
+      state.progressTimer = setInterval(() => {
+        value = Math.min(value + (value < 70 ? 4 : 1.3), 92);
+        progressBarEl.style.width = `${value}%`;
+      }, 1300);
+    }
+    function stopProgress(success) { clearInterval(state.progressTimer); progressBarEl.style.width = success ? "100%" : "0%"; }
+    function resetOutput() { mediaFrameEl.innerHTML = ""; resultNoteEl.textContent = ""; outputBoxEl.classList.remove("show"); paywallEl.classList.remove("show"); state.currentResultUrl = ""; state.currentResultMode = ""; }
+    function directDownload(url, filename) { const anchor = document.createElement("a"); anchor.href = url; anchor.download = filename; anchor.target = "_blank"; anchor.click(); }
+    function showMessage(target, text, isError) { target.textContent = text; target.className = `message show ${isError ? "error" : "ok"}`; }
+    function clearMessages() { [appMsgEl, loginMsgEl, registerMsgEl, forgotMsgEl, resetMsgEl].forEach((node) => { node.textContent = ""; node.className = "message"; }); }
+    function fileToDataUrl(file) { return new Promise((resolve, reject) => { const reader = new FileReader(); reader.onload = () => resolve(reader.result); reader.onerror = () => reject(new Error("Не удалось прочитать файл.")); reader.readAsDataURL(file); }); }
+    function optimizeImage(dataUrl, maxSize, quality) {
+      return new Promise((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          const scale = Math.min(1, maxSize / Math.max(image.width, image.height));
+          const width = Math.max(1, Math.round(image.width * scale));
+          const height = Math.max(1, Math.round(image.height * scale));
+          const canvas = document.createElement("canvas");
+          canvas.width = width;
+          canvas.height = height;
+          const context = canvas.getContext("2d");
+          context.drawImage(image, 0, 0, width, height);
+          resolve(canvas.toDataURL("image/jpeg", quality));
+        };
+        image.onerror = () => reject(new Error("Не удалось обработать изображение."));
+        image.src = dataUrl;
+      });
+    }
+    function sleep(ms) { return new Promise((resolve) => setTimeout(resolve, ms)); }
+    function generatePromoCode() { const alphabet = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; let value = "PROMO-"; for (let index = 0; index < 8; index += 1) value += alphabet[Math.floor(Math.random() * alphabet.length)]
